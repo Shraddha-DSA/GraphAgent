@@ -17,7 +17,9 @@ class GraphBuilder:
         graph.graph["latency"] = workflow["latency"]
         graph.graph["token_usage"] = workflow["token_usage"]
         graph.graph["cost"] = workflow["cost"]
-        graph.graph["success"] = workflow["success"]
-        graph.graph["next_agent"] = workflow["next_agent"]
+        graph.graph["success"] = workflow.get("success", False)
+
+        if "next_agent" in workflow:
+            graph.graph["next_agent"] = workflow["next_agent"]
 
         return graph
