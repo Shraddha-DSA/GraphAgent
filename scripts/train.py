@@ -13,80 +13,77 @@ from graphagent.models.graphsage import GraphSAGE
 from graphagent.models.trainer import Trainer
 
 
-generator = SyntheticWorkflowGenerator()
+def main():
+    generator = SyntheticWorkflowGenerator()
 
-workflows = generator.generate_dataset(1000)
+    workflows = generator.generate_dataset(1000)
+    splitter = DatasetSplitter()
 
+    train_workflows, val_workflows, test_workflows = splitter.split(
+        workflows
+    )
+    train_dataset = WorkflowDataset(train_workflows)
 
-splitter = DatasetSplitter()
+    val_dataset = WorkflowDataset(val_workflows)
 
-train, val, test = splitter.split(workflows)
-
-
-train_dataset = WorkflowDataset(train)
-
-val_dataset = WorkflowDataset(val)
-
-test_dataset = WorkflowDataset(test)
-
-train_loader = DataLoader(
-    train_dataset,
-    batch_size=32,
-    shuffle=True,
-)
-
-val_loader = DataLoader(
-    val_dataset,
-    batch_size=32,
-    shuffle=False,
-)
-
-test_loader = DataLoader(
-    test_dataset,
-    batch_size=32,
-    shuffle=False,
-)
-
-
-model = GraphSAGE(
-    in_channels=5,
-    hidden_channels=32,
-    num_classes=2,
-)
-
-
-optimizer = Adam(
-    model.parameters(),
-    lr=0.001,
-)
-
-
-trainer = Trainer(
-    model=model,
-    optimizer=optimizer,
-    train_loader=train_loader,
-    val_loader=val_loader,
-)
-
-EPOCHS = 20
-
-for epoch in range(EPOCHS):
-
-    train_loss, train_acc = trainer.train_epoch()
-
-    val_loss, val_acc = trainer.evaluate(val_loader)
-
-    trainer.save_best(val_acc)
-
-    print(
-        f"Epoch {epoch + 1:03d} | "
-        f"Train Loss: {train_loss:.4f} | "
-        f"Train Acc: {train_acc:.4f} | "
-        f"Val Loss: {val_loss:.4f} | "
-        f"Val Acc: {val_acc:.4f}"
+    test_dataset = WorkflowDataset(test_workflows)
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=32,
+        shuffle=True,
     )
 
-test_loss, test_acc = trainer.evaluate(test_loader)
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=32,
+        shuffle=False,
+    )
 
-print("\nTraining Complete!")
-print(f"Test Accuracy : {test_acc:.4f}")
+    test_loader = DataLoader(
+        test_dataset,
+        batch_size=32,
+        shuffle=False,
+    )
+    model = GraphSAGE(
+        in_channels=5,
+        hidden_channels=32,
+        num_classes=2,
+    )
+    optimizer = Adam(
+        model.parameters(),
+        lr=0.001,
+    )
+    trainer = Trainer(
+        model=model,
+        optimizer=optimizer,
+        train_loader=train_loader,
+        val_loader=val_loader,
+    )
+    EPOCHS = 20
+
+    for epoch in range(EPOCHS):
+
+        train_loss, train_acc = trainer.train_epoch()
+
+        val_loss, val_acc = trainer.evaluate(val_loader)
+
+        trainer.save_best(val_acc)
+
+        print(
+            f"Epoch {epoch + 1:03d} | "
+            f"Train Loss: {train_loss:.4f} | "
+            f"Train Acc: {train_acc:.4f} | "
+            f"Val Loss: {val_loss:.4f} | "
+            f"Val Acc: {val_acc:.4f}"
+        )
+    test_loss, test_acc = trainer.evaluate(test_loader)
+
+    print("\n" + "=" * 60)
+    print("Training Complete!")
+    print(f"Test Loss     : {test_loss:.4f}")
+    print(f"Test Accuracy : {test_acc:.4f}")
+    print("=" * 60)
+
+
+if __name__ == "__main__":
+    main()
