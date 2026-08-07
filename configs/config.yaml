@@ -1,0 +1,12 @@
+seed: 42
+
+data:
+  samples: 10000
+
+training:
+  epochs: 100
+  batch_size: 64
+  learning_rate: 0.001
+
+model:
+  hidden_channels: 64

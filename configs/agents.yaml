@@ -1,0 +1,11 @@
+agents:
+
+  - Planner
+
+  - Researcher
+
+  - Coder
+
+  - Reviewer
+
+  - Tester

@@ -1,0 +1,147 @@
+[
+    {
+        "task": "code_generation",
+        "agents": [
+            "Coder",
+            "Reviewer",
+            "Planner",
+            "Tester"
+        ],
+        "edges": [
+            [
+                "Coder",
+                "Reviewer"
+            ],
+            [
+                "Reviewer",
+                "Planner"
+            ],
+            [
+                "Planner",
+                "Tester"
+            ]
+        ],
+        "latency": 22.03,
+        "token_usage": 17753,
+        "cost": 0.3551,
+        "success": true
+    },
+    {
+        "task": "translation",
+        "agents": [
+            "Tester",
+            "Coder",
+            "Planner",
+            "Reviewer",
+            "Researcher"
+        ],
+        "edges": [
+            [
+                "Tester",
+                "Coder"
+            ],
+            [
+                "Coder",
+                "Planner"
+            ],
+            [
+                "Planner",
+                "Reviewer"
+            ],
+            [
+                "Reviewer",
+                "Researcher"
+            ]
+        ],
+        "latency": 23.39,
+        "token_usage": 18239,
+        "cost": 0.3648,
+        "success": true
+    },
+    {
+        "task": "bug_fixing",
+        "agents": [
+            "Planner",
+            "Researcher",
+            "Reviewer",
+            "Coder"
+        ],
+        "edges": [
+            [
+                "Planner",
+                "Researcher"
+            ],
+            [
+                "Researcher",
+                "Reviewer"
+            ],
+            [
+                "Reviewer",
+                "Coder"
+            ]
+        ],
+        "latency": 12.26,
+        "token_usage": 21558,
+        "cost": 0.4312,
+        "success": false
+    },
+    {
+        "task": "documentation",
+        "agents": [
+            "Coder",
+            "Reviewer",
+            "Planner",
+            "Researcher",
+            "Tester"
+        ],
+        "edges": [
+            [
+                "Coder",
+                "Reviewer"
+            ],
+            [
+                "Reviewer",
+                "Planner"
+            ],
+            [
+                "Planner",
+                "Researcher"
+            ],
+            [
+                "Researcher",
+                "Tester"
+            ]
+        ],
+        "latency": 8.11,
+        "token_usage": 11051,
+        "cost": 0.221,
+        "success": true
+    },
+    {
+        "task": "question_answering",
+        "agents": [
+            "Coder",
+            "Reviewer",
+            "Researcher",
+            "Tester"
+        ],
+        "edges": [
+            [
+                "Coder",
+                "Reviewer"
+            ],
+            [
+                "Reviewer",
+                "Researcher"
+            ],
+            [
+                "Researcher",
+                "Tester"
+            ]
+        ],
+        "latency": 55.76,
+        "token_usage": 4204,
+        "cost": 0.0841,
+        "success": false
+    }
+]
