@@ -46,14 +46,10 @@ class GraphDataset:
 
         edge_attr = self.edge_builder.build(graph)
 
-        label = AGENT_TO_ID[
-        graph.graph["next_agent"]
-]
-
         y = torch.tensor(
-            [label],
-            dtype=torch.long,
-        )
+        [int(graph.graph["success"])],
+        dtype=torch.long,
+)
 
         return Data(
             x=x,
