@@ -1,18 +1,12 @@
-"""
-FastAPI application for GraphAgent.
-"""
-
 from fastapi import FastAPI
-from graphagent.api.schemas import RecommendationResponse
 
+from graphagent.api.predictor import Predictor
 from graphagent.api.recommender import WorkflowRecommender
 from graphagent.api.schemas import (
     WorkflowRequest,
     PredictionResponse,
+    RecommendationResponse,
 )
-
-from graphagent.api.predictor import Predictor
-
 
 app = FastAPI(
     title="GraphAgent API",
@@ -45,6 +39,14 @@ def health():
     "/predict",
     response_model=PredictionResponse,
 )
+def predict(request: WorkflowRequest):
+    workflow = request.model_dump()
+    result = predictor.predict(workflow)
+    return PredictionResponse(
+        **result
+    )
+
+
 @app.post(
     "/recommend",
     response_model=RecommendationResponse,
@@ -53,17 +55,9 @@ def recommend(request: WorkflowRequest):
 
     workflow = request.model_dump()
 
-    result = recommender.recommend(
-        workflow
-    )
+    
+    result = recommender.recommend(workflow)
 
     return RecommendationResponse(
         **result
     )
-def predict(request: WorkflowRequest):
-
-    workflow = request.model_dump()
-
-    result = predictor.predict(workflow)
-
-    return PredictionResponse(**result)
