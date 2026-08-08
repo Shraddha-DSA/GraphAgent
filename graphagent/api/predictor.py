@@ -1,26 +1,23 @@
-"""
-Inference engine for GraphAgent.
-"""
-
 from pathlib import Path
 
 import torch
 
-from graphagent.graphs.builder import GraphBuilder
 from graphagent.data.dataset import GraphDataset
+from graphagent.graphs.builder import GraphBuilder
 from graphagent.models.graphsage import GraphSAGE
 
 
 class Predictor:
 
-    def __init__(self, checkpoint="checkpoints/best_model.pt"):
-
+    def __init__(
+        self,
+        checkpoint="checkpoints/best_model.pt",
+    ):
         self.device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu"
         )
 
         self.builder = GraphBuilder()
-
         self.converter = GraphDataset()
 
         self.model = GraphSAGE(
@@ -29,24 +26,26 @@ class Predictor:
             num_classes=2,
         )
 
-        checkpoint = Path(checkpoint)
+        checkpoint_path = Path(checkpoint)
 
-        if checkpoint.exists():
-
-            self.model.load_state_dict(
-                torch.load(
-                    checkpoint,
-                    map_location=self.device,
-                )
+        if not checkpoint_path.exists():
+            raise FileNotFoundError(
+                f"Model checkpoint not found: {checkpoint_path}"
             )
 
+        state_dict = torch.load(
+            checkpoint_path,
+            map_location=self.device,
+            weights_only=True,
+        )
+
+        self.model.load_state_dict(state_dict)
         self.model.to(self.device)
 
         self.model.eval()
 
     @torch.no_grad()
     def predict(self, workflow):
-
         graph = self.builder.build_graph(workflow)
 
         data = self.converter.graph_to_data(graph)
@@ -60,11 +59,20 @@ class Predictor:
             dim=1,
         )
 
-        confidence = probabilities.max().item()
+        success_probability = probabilities[0, 1].item()
 
-        prediction = logits.argmax(dim=1).item()
+        prediction = logits.argmax(
+            dim=1
+        ).item()
 
         return {
-            "prediction": "Success" if prediction else "Failure",
-            "success_probability": round(confidence, 4),
+            "prediction": (
+                "Success"
+                if prediction == 1
+                else "Failure"
+            ),
+            "success_probability": round(
+                success_probability,
+                4,
+            ),
         }
