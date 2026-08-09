@@ -21,7 +21,7 @@ class Predictor:
         self.converter = GraphDataset()
 
         self.model = GraphSAGE(
-            in_channels=5,
+            in_channels=16,
             hidden_channels=32,
             num_classes=2,
         )
@@ -47,6 +47,12 @@ class Predictor:
     @torch.no_grad()
     def predict(self, workflow):
         graph = self.builder.build_graph(workflow)
+
+        graph.graph["task"] = workflow["task"]
+        graph.graph["latency"] = workflow["latency"]
+        graph.graph["token_usage"] = workflow["token_usage"]
+        graph.graph["cost"] = workflow["cost"]
+        graph.graph["success"] = False
 
         data = self.converter.graph_to_data(graph)
 

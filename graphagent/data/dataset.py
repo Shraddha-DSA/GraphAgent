@@ -1,11 +1,11 @@
-"""
-PyTorch Geometric Dataset for GraphAgent.
-"""
-
 from __future__ import annotations
 
 import torch
-from torch_geometric.data import Data, InMemoryDataset
+
+from torch_geometric.data import (
+    Data,
+    InMemoryDataset,
+)
 
 from graphagent.graphs.builder import GraphBuilder
 from graphagent.graphs.edge_features import EdgeFeatureBuilder
@@ -13,43 +13,59 @@ from graphagent.graphs.node_features import NodeFeatureBuilder
 
 from graphagent.core.constants import AGENT_TO_ID
 
-class GraphDataset:
-    """
-    Converts a NetworkX graph into a PyTorch Geometric Data object.
-    """
 
+class GraphDataset:
     def __init__(self):
+
         self.node_builder = NodeFeatureBuilder()
         self.edge_builder = EdgeFeatureBuilder()
 
     def graph_to_data(self, graph):
-
         node_to_idx = {
             node: idx
-            for idx, node in enumerate(graph.nodes())
+            for idx, node in enumerate(
+                graph.nodes()
+            )
         }
 
-        # Node features
         x = self.node_builder.build(graph)
-
-        # Edge index
         edges = [
-            [node_to_idx[s], node_to_idx[t]]
-            for s, t in graph.edges()
+            [
+                node_to_idx[source],
+                node_to_idx[target],
+            ]
+            for source, target in graph.edges()
         ]
 
-        edge_index = (
-            torch.tensor(edges, dtype=torch.long)
-            .t()
-            .contiguous()
+        if edges:
+
+            edge_index = (
+                torch.tensor(
+                    edges,
+                    dtype=torch.long,
+                )
+                .t()
+                .contiguous()
+            )
+
+        else:
+
+            edge_index = torch.empty(
+                (2, 0),
+                dtype=torch.long,
+            )
+        edge_attr = self.edge_builder.build(
+            graph
         )
 
-        edge_attr = self.edge_builder.build(graph)
+        label = int(
+            graph.graph["success"]
+        )
 
         y = torch.tensor(
-        [int(graph.graph["success"])],
-        dtype=torch.long,
-)
+            [label],
+            dtype=torch.long,
+        )
 
         return Data(
             x=x,
@@ -60,29 +76,55 @@ class GraphDataset:
 
 
 class WorkflowDataset(InMemoryDataset):
-    """
-    Dataset of workflow graphs.
-    """
-
     def __init__(self, workflows):
 
         super().__init__()
 
         self.builder = GraphBuilder()
+
         self.converter = GraphDataset()
 
         self.data_list = []
 
         for workflow in workflows:
 
-            graph = self.builder.build_graph(workflow)
+            graph = self.builder.build_graph(
+                workflow
+            )
 
-            data = self.converter.graph_to_data(graph)
+
+            graph.graph["task"] = workflow[
+                "task"
+            ]
+
+            graph.graph["latency"] = workflow[
+                "latency"
+            ]
+
+            graph.graph["token_usage"] = workflow[
+                "token_usage"
+            ]
+
+            graph.graph["cost"] = workflow[
+                "cost"
+            ]
+
+            graph.graph["success"] = workflow[
+                "success"
+            ]
+
+            data = self.converter.graph_to_data(
+                graph
+            )
 
             self.data_list.append(data)
 
     def len(self):
-        return len(self.data_list)
+
+        return len(
+            self.data_list
+        )
 
     def get(self, idx):
+
         return self.data_list[idx]

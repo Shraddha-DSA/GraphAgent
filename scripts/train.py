@@ -59,7 +59,7 @@ def main():
     )
 
     model = GraphSAGE(
-        in_channels=5,
+        in_channels=16,
         hidden_channels=HIDDEN_CHANNELS,
         num_classes=2,
     )

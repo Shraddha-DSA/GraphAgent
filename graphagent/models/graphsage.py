@@ -1,7 +1,3 @@
-"""
-GraphSAGE model for graph classification.
-"""
-
 from __future__ import annotations
 
 import torch
@@ -14,10 +10,6 @@ from torch_geometric.nn import (
 
 
 class GraphSAGE(torch.nn.Module):
-    """
-    GraphSAGE for graph classification.
-    """
-
     def __init__(
         self,
         in_channels: int,
@@ -47,13 +39,16 @@ class GraphSAGE(torch.nn.Module):
         )
 
     def forward(self, data):
-
         x = data.x
+
         edge_index = data.edge_index
 
         if hasattr(data, "batch"):
+
             batch = data.batch
+
         else:
+
             batch = torch.zeros(
                 x.size(0),
                 dtype=torch.long,
@@ -80,6 +75,7 @@ class GraphSAGE(torch.nn.Module):
             x,
             batch,
         )
+
         x = self.classifier(x)
 
         return x
