@@ -1,63 +1,85 @@
-"""
-Simple workflow recommendation engine.
-"""
+from graphagent.api.predictor import Predictor
 
 
 class WorkflowRecommender:
 
-    def recommend(self, workflow):
+    def __init__(self):
+        self.predictor = Predictor()
 
-        agents = workflow["agents"]
+    def recommend(self, workflow):
+        prediction = self.predictor.predict(workflow)
 
         recommendations = []
 
-        estimated_success = 0.80
+        agents = workflow["agents"]
+        edges = workflow["edges"]
+        estimated_success = prediction["success_probability"]
 
-        if "Reviewer" not in agents:
 
+        if "Planner" not in agents:
             recommendations.append(
-                "Add a Reviewer before testing."
+                "Add a Planner at the beginning of the workflow."
             )
-
-            estimated_success += 0.08
 
         if "Researcher" not in agents:
-
             recommendations.append(
-                "Add a Researcher for better context."
+                "Add a Researcher when the task requires external context."
             )
 
-            estimated_success += 0.05
-
-        if agents.count("Coder") > 2:
-
+        if "Reviewer" not in agents:
             recommendations.append(
-                "Reduce repeated coding iterations."
+                "Add a Reviewer before the final testing stage."
             )
 
         if "Tester" not in agents:
-
             recommendations.append(
-                "Add a Tester before deployment."
+                "Add a Tester before completing the workflow."
             )
 
-            estimated_success += 0.05
+        if (
+            "Reviewer" in agents
+            and "Tester" in agents
+            and agents.index("Reviewer")
+            > agents.index("Tester")
+        ):
+            recommendations.append(
+                "Move Reviewer before Tester."
+            )
+
+        if len(agents) != len(set(agents)):
+            recommendations.append(
+                "Reduce unnecessary repeated agent executions."
+            )
+
+        if len(edges) >= len(agents):
+            recommendations.append(
+                "Workflow contains loops; review repeated execution paths."
+            )
+
+        if workflow["latency"] > 30:
+            recommendations.append(
+                "Reduce workflow latency by removing unnecessary stages."
+            )
+
+        if workflow["token_usage"] > 20000:
+            recommendations.append(
+                "Reduce token usage by shortening unnecessary agent calls."
+            )
+
+        if workflow["cost"] > 0.50:
+            recommendations.append(
+                "Reduce workflow cost by minimizing expensive agent calls."
+            )
 
         if not recommendations:
-
             recommendations.append(
-                "Workflow looks well structured."
+                "Workflow structure looks strong."
             )
-
-        estimated_success = min(
-            estimated_success,
-            0.99,
-        )
 
         return {
             "recommendation": recommendations,
             "estimated_success": round(
                 estimated_success,
-                2,
+                4,
             ),
         }
