@@ -1,10 +1,7 @@
-"""
-GraphAgent Textual terminal UI.
-"""
-
 import requests
 
 from textual.app import App, ComposeResult
+
 from textual.containers import Container, Horizontal
 from textual.widgets import (
     Button,
@@ -17,7 +14,6 @@ from textual.widgets import (
 )
 
 
-# FastAPI backend URL.
 API_URL = "http://localhost:8000"
 
 
@@ -57,10 +53,19 @@ class GraphAgentApp(App):
         margin-bottom: 1;
     }
 
+    #graph {
+        width: 100%;
+        min-height: 15;
+        border: solid yellow;
+        padding: 1;
+        margin-top: 2;
+        margin-bottom: 2;
+    }
+
     #actions {
         width: 100%;
         height: 5;
-        margin-top: 2;
+        margin-top: 1;
         margin-bottom: 2;
         align: center middle;
     }
@@ -76,13 +81,16 @@ class GraphAgentApp(App):
         border: solid green;
         padding: 1;
         margin-top: 2;
+        margin-bottom: 2;
     }
     """
 
-    def compose(self) -> ComposeResult:
-        yield Header()
 
+    def compose(self) -> ComposeResult:
+
+        yield Header()
         with Container(id="main"):
+
 
             yield Label(
                 "GRAPHAGENT",
@@ -90,14 +98,15 @@ class GraphAgentApp(App):
             )
 
             yield Label(
-                "Graph Neural Network based Multi-Agent Workflow Analyzer"
+                "Graph Neural Network based Multi-Agent "
+                "Workflow Analyzer"
             )
 
+            
             yield Label(
                 "Task",
                 classes="label",
             )
-
             yield Select(
                 [
                     ("Code Generation", "code_generation"),
@@ -110,6 +119,7 @@ class GraphAgentApp(App):
                 value="code_generation",
                 id="task",
             )
+
 
             yield Label(
                 "Agents (comma separated)",
@@ -141,6 +151,8 @@ class GraphAgentApp(App):
                 id="tokens",
             )
 
+            
+
             yield Label(
                 "Cost",
                 classes="label",
@@ -151,6 +163,16 @@ class GraphAgentApp(App):
                 id="cost",
             )
 
+            
+            yield Static(
+                "Workflow Graph\n\n"
+                "Click Predict or Recommend to generate "
+                "the workflow graph.",
+                id="graph",
+                markup=False,
+            )
+
+            
 
             with Horizontal(id="actions"):
 
@@ -166,21 +188,51 @@ class GraphAgentApp(App):
                     variant="primary",
                 )
 
-
+            
             yield Static(
                 "Result will appear here...",
                 id="result",
+                markup=False,
             )
 
         yield Footer()
 
-    def build_workflow(self):
+    
 
+    def format_graph(self, workflow):
+        
+
+        agents = workflow["agents"]
+
+        if not agents:
+            return "No agents defined."
+
+        lines = []
+
+        for index, agent in enumerate(agents):
+
+            lines.append(
+                f"[{agent}]"
+            )
+
+            if index < len(agents) - 1:
+                lines.append(
+                    "    |"
+                )
+
+                lines.append(
+                    "    v"
+                )
+
+        return "\n".join(lines)
+
+    def build_workflow(self):
 
         task = self.query_one(
             "#task",
             Select,
         ).value
+
 
         agents_text = self.query_one(
             "#agents",
@@ -199,18 +251,29 @@ class GraphAgentApp(App):
         ]
 
         latency = float(
-            self.query_one("#latency", Input).value
+            self.query_one(
+                "#latency",
+                Input,
+            ).value
         )
+
 
         tokens = int(
-            self.query_one("#tokens", Input).value
+            self.query_one(
+                "#tokens",
+                Input,
+            ).value
         )
+
 
         cost = float(
-            self.query_one("#cost", Input).value
+            self.query_one(
+                "#cost",
+                Input,
+            ).value
         )
 
-        return {
+        workflow = {
             "task": task,
             "agents": agents,
             "edges": edges,
@@ -219,13 +282,26 @@ class GraphAgentApp(App):
             "cost": cost,
         }
 
-    def show_result(self, message):
 
+        graph_text = (
+            "Workflow Graph\n\n"
+            + self.format_graph(workflow)
+        )
 
         self.query_one(
+            "#graph",
+            Static,
+        ).update(graph_text)
+
+        return workflow
+
+
+    def show_result(self, message):
+        result_widget = self.query_one(
             "#result",
             Static,
-        ).update(message)
+        )
+        result_widget.update(message)
 
     def on_button_pressed(
         self,
@@ -248,11 +324,17 @@ class GraphAgentApp(App):
                 response.raise_for_status()
 
                 result = response.json()
+                prediction = result["prediction"]
+
+                probability = result[
+                    "success_probability"
+                ]
 
                 self.show_result(
-                    f"Prediction: {result['prediction']}\n\n"
+                    "GRAPHAGENT PREDICTION\n\n"
+                    f"Prediction: {prediction}\n"
                     f"Success Probability: "
-                    f"{result['success_probability']:.2%}"
+                    f"{probability:.2%}"
                 )
 
             elif event.button.id == "recommend":
@@ -268,13 +350,20 @@ class GraphAgentApp(App):
                 result = response.json()
 
                 recommendations = "\n".join(
-                    f"• {item}"
-                    for item in result["recommendation"]
+                    f"- {item}"
+                    for item in result[
+                        "recommendation"
+                    ]
                 )
 
+                estimated_success = result[
+                    "estimated_success"
+                ]
+
                 self.show_result(
+                    "GRAPHAGENT RECOMMENDATION\n\n"
                     f"Estimated Success: "
-                    f"{result['estimated_success']:.2%}\n\n"
+                    f"{estimated_success:.2%}\n\n"
                     f"Recommendations:\n"
                     f"{recommendations}"
                 )
@@ -282,16 +371,18 @@ class GraphAgentApp(App):
         except requests.RequestException as error:
 
             self.show_result(
-                f"API Error:\n{error}"
+                "API Error:\n\n"
+                f"{error}"
             )
+
 
         except (ValueError, TypeError) as error:
 
             self.show_result(
-                f"Input Error:\n{error}"
+                "Input Error:\n\n"
+                f"{error}"
             )
 
 
 if __name__ == "__main__":
-
     GraphAgentApp().run()
